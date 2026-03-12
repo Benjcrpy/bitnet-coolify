@@ -10,6 +10,9 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     wget \
     curl \
     ca-certificates \
+    gnupg \
+    lsb-release \
+    software-properties-common \
     python3 \
     python3-pip \
     python3-venv \
@@ -17,7 +20,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     build-essential \
     && rm -rf /var/lib/apt/lists/*
 
-# Install LLVM/Clang (BitNet requires clang>=18)
+# Install LLVM/Clang
 RUN bash -c "$(wget -O - https://apt.llvm.org/llvm.sh)"
 
 # Point clang / clang++ to the newest installed version
@@ -34,10 +37,10 @@ RUN python3 -m pip install --upgrade pip setuptools wheel && \
     pip3 install -r requirements.txt && \
     pip3 install huggingface_hub
 
-# Download the official 2B GGUF model from the README
+# Download model
 RUN huggingface-cli download microsoft/BitNet-b1.58-2B-4T-gguf --local-dir /app/models/BitNet-b1.58-2B-4T
 
-# Prepare environment and model
+# Prepare environment
 RUN python3 setup_env.py -md /app/models/BitNet-b1.58-2B-4T -q i2_s
 
 EXPOSE 8080
