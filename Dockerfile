@@ -20,14 +20,12 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     build-essential \
     && rm -rf /var/lib/apt/lists/*
 
-# Install LLVM/Clang (required by BitNet)
-RUN bash -c "$(wget -O - https://apt.llvm.org/llvm.sh)"
+# Install LLVM/Clang 19
+RUN bash -c "$(wget -O - https://apt.llvm.org/llvm.sh)" -- 19
 
-# Point clang / clang++ to the newest installed version
-RUN CLANG_BIN="$(ls /usr/bin/clang-[0-9]* | sort -V | tail -n1)" && \
-    CLANGXX_BIN="$(ls /usr/bin/clang++-[0-9]* | sort -V | tail -n1)" && \
-    ln -sf "$CLANG_BIN" /usr/bin/clang && \
-    ln -sf "$CLANGXX_BIN" /usr/bin/clang++
+# Pin clang / clang++ to version 19
+RUN ln -sf /usr/bin/clang-19 /usr/bin/clang && \
+    ln -sf /usr/bin/clang++-19 /usr/bin/clang++
 
 # Clone BitNet
 RUN git clone --recursive https://github.com/microsoft/BitNet.git /app
@@ -44,8 +42,8 @@ RUN pip install --upgrade pip setuptools wheel && \
 # Download official model
 RUN huggingface-cli download microsoft/BitNet-b1.58-2B-4T-gguf --local-dir /app/models/BitNet-b1.58-2B-4T
 
-# Prepare BitNet environment
-RUN python setup_env.py -md /app/models/BitNet-b1.58-2B-4T -q i2_s
+# Prepare BitNet environment and print logs if compile fails
+RUN python setup_env.py -md /app/models/BitNet-b1.58-2B-4T -q i2_s || (echo "===== generate_build_files.log =====" && cat logs/generate_build_files.log && echo "===== compile.log =====" && cat logs/compile.log && false)
 
 EXPOSE 8080
 
